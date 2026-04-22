@@ -23,7 +23,7 @@ local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled and not UIS.MouseE
 
 local s, rm = pcall(require, RS.Modules.Shared.RayUtils.RayMouse);
 if not s then
-    return warn(executor .. " returned an error while trying to require RS.Modules.Shared.RayUtils.RayMouse:\n" .. rm);
+    return warn(executor .. " returned an error while trying to require RS.Modules.Shared.RayUtils.RayRaycast:\n" .. rm);
 end;
 
 local s2, srvs = pcall(require, RS.FrameworkFiles.Srvs);
@@ -31,12 +31,21 @@ if not s2 then
     return warn(executor .. " returned an error while trying to require RS.FrameworkFiles.Srvs:\n" .. srvs);
 end;
 
-local Chars, mif = workspace:FindFirstChild("Spawned") and workspace.Spawned:FindFirstChild("Characters"), workspace:FindFirstChild("Spawned") and workspace.Spawned:FindFirstChild("MouseIgnoreFolder");
-if not (Chars and mif) then
+local Chars, Enemies, mif, ic = workspace:FindFirstChild("Spawned")
+    and workspace.Spawned:FindFirstChild("Characters"), workspace:FindFirstChild("Spawned")
+    and workspace.Spawned:FindFirstChild("Enemies"), workspace:FindFirstChild("Spawned")
+    and workspace.Spawned:FindFirstChild("MouseIgnoreFolder"), RS:FindFirstChild("Modules")
+    and RS.Modules:FindFirstChild("Shared")
+    and RS.Modules.Shared:FindFirstChild("GameConfiguration")
+    and RS.Modules.Shared.GameConfiguration:FindFirstChild("ItemConfigs");
+
+if not (Chars and mif and ic) then
     local err = "Script needs updating";
     SG["error"](err);
     return warn(err);
 end;
+
+for _, v: ModuleScript in next, ic:GetChildren() do local old; old = clonefunction(hookfunction(require(v), function(...) return rawset(old(...), "ProjectileSpread", 0); end)); end;
 
 local rp = RaycastParams.new();
 rp.FilterType = Enum.RaycastFilterType.Exclude;
@@ -64,7 +73,13 @@ end;
 local getTarget = function(origin: Vector3)
     local cPart, cDistance = nil, getgenv().fov or 300;
 
-    for _, char: Model in next, Chars:GetChildren() do
+    local tmp = table.create(#Chars:GetChildren() + #Enemies:GetChildren());
+
+    local i = 0;
+    for _, v in next, Chars:GetChildren() do i += 1; tmp[i] = v; end;
+    for _, v in next, Enemies:GetChildren() do i += 1; tmp[i] = v; end;
+
+    for _, char: Model in next, tmp do
         if char == plr.Character or (char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart:FindFirstChild("ForceField1", true)) or (char:FindFirstChild("Humanoid") and char.Humanoid.Health <= 0) then continue; end;
 
         local tPart: BasePart = char:FindFirstChild("Head") or char.PrimaryPart or char:FindFirstChild("HumanoidRootPart");
@@ -95,7 +110,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/sneekygoober/sneeky-s
 
 rawset(srvs, "UserInputService", setmetatable({}, {
     __index = function(_, k)
-        if k == "TouchEnabled" and debug.getinfo(2).source == "=ReplicatedStorage.Modules.Shared.RayUtils.RayMouse" then
+        if k == "TouchEnabled" and debug.getinfo(2).source == "=ReplicatedStorage.Modules.Client.Behaviours.BehaviourGunClient" then
             return false;
         end;
 

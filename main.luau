@@ -23,7 +23,7 @@ local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled and not UIS.MouseE
 
 local s, rm = pcall(require, RS.Modules.Shared.RayUtils.RayMouse);
 if not s then
-    return warn(executor .. " returned an error while trying to require RS.Modules.Shared.RayUtils.RayRaycast:\n" .. rm);
+    return warn(executor .. " returned an error while trying to require RS.Modules.Shared.RayUtils.RayMouse:\n" .. rm);
 end;
 
 local s2, srvs = pcall(require, RS.FrameworkFiles.Srvs);

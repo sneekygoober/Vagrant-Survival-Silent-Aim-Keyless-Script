@@ -39,7 +39,7 @@ local Chars, Enemies, mif, ic = workspace:FindFirstChild("Spawned")
     and RS.Modules.Shared:FindFirstChild("GameConfiguration")
     and RS.Modules.Shared.GameConfiguration:FindFirstChild("ItemConfigs");
 
-if not (Chars and mif and ic) then
+if not (Chars and Enemies and mif and ic) then
     local err = "Script needs updating";
     SG["error"](err);
     return warn(err);

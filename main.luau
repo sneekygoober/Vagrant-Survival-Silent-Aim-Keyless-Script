@@ -110,7 +110,8 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/sneekygoober/sneeky-s
 
 rawset(srvs, "UserInputService", setmetatable({}, {
     __index = function(_, k)
-        if k == "TouchEnabled" and debug.getinfo(2).source == "=ReplicatedStorage.Modules.Client.Behaviours.BehaviourGunClient" then
+        local dbg = debug.getinfo(2);
+        if k == "TouchEnabled" and dbg.source == "=ReplicatedStorage.Modules.Client.Behaviours.BehaviourGunClient" and dbg.currentline == 204 then
             return false;
         end;
 

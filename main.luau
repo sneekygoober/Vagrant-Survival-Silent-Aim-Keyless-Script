@@ -112,7 +112,7 @@ if isMobile then
     rawset(srvs, "UserInputService", setmetatable({}, {
         __index = function(_, k)
             local dbg = debug.getinfo(2);
-            if k == "TouchEnabled" and dbg.source == "=ReplicatedStorage.Modules.Client.Behaviours.BehaviourGunClient" and dbg.currentline == 204 then
+            if k == "TouchEnabled" and rawget(dbg, "source") == "=ReplicatedStorage.Modules.Client.Behaviours.BehaviourGunClient" and rawget(dbg, "currentline") == 204 then
                 return false;
             end;
 
@@ -132,7 +132,7 @@ end;
 local old = rawget(rm, "GetMousePosition"); rawset(rm, "GetMousePosition", function(...)
     local c = getTarget();
     local dbg = debug.getinfo(2);
-    if c and dbg.source == "=ReplicatedStorage.Modules.Client.Behaviours.BehaviourGunClient" and dbg.currentline == 204 then
+    if c and rawget(dbg, "source") == "=ReplicatedStorage.Modules.Client.Behaviours.BehaviourGunClient" and rawget(dbg, "currentline") == 204 then
         return c.Position;
     end;
     return old(...);

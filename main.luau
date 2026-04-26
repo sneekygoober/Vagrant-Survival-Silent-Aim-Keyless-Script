@@ -108,31 +108,33 @@ end;
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/sneekygoober/sneeky-s-fov-lib/refs/heads/main/main.luau"))()(getgenv().fov or 300, getTarget, true);
 
-rawset(srvs, "UserInputService", setmetatable({}, {
-    __index = function(_, k)
-        local dbg = debug.getinfo(2);
-        if k == "TouchEnabled" and dbg.source == "=ReplicatedStorage.Modules.Client.Behaviours.BehaviourGunClient" and dbg.currentline == 204 then
-            return false;
-        end;
-
-        local v = UIS[k];
-
-        if typeof(v) == "function" then
-            return function(_, ...)
-                return v(UIS, ...);
+if isMobile then
+    rawset(srvs, "UserInputService", setmetatable({}, {
+        __index = function(_, k)
+            local dbg = debug.getinfo(2);
+            if k == "TouchEnabled" and dbg.source == "=ReplicatedStorage.Modules.Client.Behaviours.BehaviourGunClient" and dbg.currentline == 204 then
+                return false;
             end;
+
+            local v = UIS[k];
+
+            if typeof(v) == "function" then
+                return function(_, ...)
+                    return v(UIS, ...);
+                end;
+            end;
+
+            return v;
         end;
+    }));
+end;
 
-        return v;
-    end;
-}));
-
-local old; old = clonefunction(hookfunction(rawget(rm, "GetMousePosition"), newcclosure(function()
+local old; old = clonefunction(hookfunction(rawget(rm, "GetMousePosition"), newcclosure(function(...)
     local c = getTarget();
     if c then
         return c.Position;
     end;
-    return old();
+    return old(...);
 end)));
 
 SG["success"]("Silent aim successfully executed!\nIf you have any issues press F9 or type /console in chat and then send me a screenshot of the console.");

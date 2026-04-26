@@ -129,12 +129,13 @@ if isMobile then
     }));
 end;
 
-local old; old = clonefunction(hookfunction(rawget(rm, "GetMousePosition"), newcclosure(function(...)
+local old = rawget(rm, "GetMousePosition"); rawset(rm, "GetMousePosition", function(...)
     local c = getTarget();
-    if c then
+    local dbg = debug.getinfo(2);
+    if c and dbg.source == "=ReplicatedStorage.Modules.Client.Behaviours.BehaviourGunClient" and dbg.currentline == 204 then
         return c.Position;
     end;
     return old(...);
-end)));
+end);
 
 SG["success"]("Silent aim successfully executed!\nIf you have any issues press F9 or type /console in chat and then send me a screenshot of the console.");

@@ -6,8 +6,8 @@ local newcclosure = newcclosure or clonefunction;
 local executor = (identifyexecutor and select(2, pcall(identifyexecutor))) and identifyexecutor() or "Your executor";
 local SG = loadstring(game:HttpGet("https://raw.githubusercontent.com/sneekygoober/sneeky-s-notifications/refs/heads/main/main.luau"))();
 
-if not (hookfunction and require) then
-    local err = executor .. " is missing " .. (not hookfunction and "hookfunction " or "") .. (not require and "require" or "");
+if not require then
+    local err = executor .. " is missing " .. (not require and "require" or "");
     SG["error"](err);
     return error(err);
 end;
@@ -19,20 +19,31 @@ local UIS: UserInputService = cloneref(game:GetService("UserInputService"));
 local plr = Players.LocalPlayer;
 local cam = workspace.CurrentCamera;
 
+repeat
+	task.wait();
+until plr.Character and plr.Character:FindFirstChild("Humanoid");
+
+plr.Character.Humanoid.Health = 0;
+
 local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled and not UIS.MouseEnabled;
 
-local s, rm = pcall(require, RS.Modules.Shared.RayUtils.RayMouse);
+local s, proj = pcall(require, RS.Modules.Client.Behaviours.BehaviourGunClient.ProjectileEnvConstructors.Projectile);
 if not s then
-    return warn(executor .. " returned an error while trying to require RS.Modules.Shared.RayUtils.RayRaycast:\n" .. rm);
+    return warn(executor .. " returned an error while trying to require RS.Modules.Client.Behaviours.BehaviourGunClient.ProjectileEnvConstructors.Projectile:\n" .. proj);
 end;
 
-local s2, srvs = pcall(require, RS.FrameworkFiles.Srvs);
+local s2, projh = pcall(require, RS.Modules.Client.Behaviours.BehaviourGunClient.ProjectileEnvConstructors.ProjectileHoming);
 if not s2 then
-    return warn(executor .. " returned an error while trying to require RS.FrameworkFiles.Srvs:\n" .. srvs);
+    return warn(executor .. " returned an error while trying to require RS.Modules.Client.Behaviours.BehaviourGunClient.ProjectileEnvConstructors.ProjectileHoming:\n" .. projh);
+end;
+
+local s3, hs = pcall(require, RS.Modules.Client.Behaviours.BehaviourGunClient.ProjectileEnvConstructors.Hitscan);
+if not s3 then
+    return warn(executor .. " returned an error while trying to require RS.Modules.Client.Behaviours.BehaviourGunClient.ProjectileEnvConstructors.Hitscan:\n" .. hs);
 end;
 
 local Chars, Enemies, mif, ic = workspace:FindFirstChild("Spawned")
-    and workspace.Spawned:FindFirstChild("Characters"), workspace:FindFirstChild("Spawned")
+    and workspace.Spawned:FindFirstChild("PlayerCharacters"), workspace:FindFirstChild("Spawned")
     and workspace.Spawned:FindFirstChild("Enemies"), workspace:FindFirstChild("Spawned")
     and workspace.Spawned:FindFirstChild("MouseIgnoreFolder"), RS:FindFirstChild("Modules")
     and RS.Modules:FindFirstChild("Shared")
@@ -45,7 +56,7 @@ if not (Chars and Enemies and mif and ic) then
     return warn(err);
 end;
 
-for _, v: ModuleScript in next, ic:GetChildren() do local old; old = clonefunction(hookfunction(require(v), function(...) return rawset(old(...), "ProjectileSpread", 0); end)); end;
+for _, v: ModuleScript in next, ic:GetChildren() do local old; old = clonefunction(hookfunction(require(v), function(...) return table.freeze(rawset(table.clone(old(...)), "ProjectileSpread", 0)); end)); end;
 
 local rp = RaycastParams.new();
 rp.FilterType = Enum.RaycastFilterType.Exclude;
@@ -108,34 +119,23 @@ end;
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/sneekygoober/sneeky-s-fov-lib/refs/heads/main/main.luau"))()(getgenv().fov or 300, getTarget, true);
 
-if isMobile then
-    rawset(srvs, "UserInputService", setmetatable({}, {
-        __index = function(_, k)
-            local dbg = debug.getinfo(2);
-            if k == "TouchEnabled" and rawget(dbg, "source") == "=ReplicatedStorage.Modules.Client.Behaviours.BehaviourGunClient" and rawget(dbg, "currentline") == 204 then
-                return false;
-            end;
-
-            local v = UIS[k];
-
-            if typeof(v) == "function" then
-                return function(_, ...)
-                    return v(UIS, ...);
-                end;
-            end;
-
-            return v;
-        end;
-    }));
+local hook = function(m: () -> ())
+	local old; old = clonefunction(hookfunction(m, newcclosure(function(_, info, ...)
+		local r = old(_, info, ...);
+		local old2 = rawget(r, "Fire");
+		rawset(r, "Fire", newcclosure(function(_, endPos, ...)
+			local c = getTarget(((rawget(info, "HumanoidRootPart") or plr.Character:FindFirstChild("HumanoidRootPart")).CFrame * CFrame.new(0, 1, 0)).Position);
+			if c then
+				return old2(_, c.Position, ...);
+			end;
+			return old2(_, endPos, ...);
+		end));
+		return r;
+	end)));
 end;
 
-local old = rawget(rm, "GetMousePosition"); rawset(rm, "GetMousePosition", function(...)
-    local c = getTarget();
-    local dbg = debug.getinfo(2);
-    if c and rawget(dbg, "source") == "=ReplicatedStorage.Modules.Client.Behaviours.BehaviourGunClient" and rawget(dbg, "currentline") == 204 then
-        return c.Position;
-    end;
-    return old(...);
-end);
+hook(proj);
+hook(projh);
+hook(hs);
 
 SG["success"]("Silent aim successfully executed!\nIf you have any issues press F9 or type /console in chat and then send me a screenshot of the console.");
